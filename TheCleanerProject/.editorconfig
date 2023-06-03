@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CS0618: O tipo ou membro é obsoleto
+dotnet_diagnostic.CS0618.severity = none
