@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: f7bf1f3efeecf764396686baf5168608
+  - enabled: 1
+    path: Assets/Scenes/MainScene.unity
+    guid: 5b011160ba6f10f47bb8c5add0cc4445
+  - enabled: 1
+    path: Assets/Scenes/MainKelson.unity
+    guid: d2f4ae9cf01d80a4d85c5209d091f875
+  - enabled: 1
+    path: Assets/Scenes/MainVictor.unity
+    guid: 51a352ebb039649458d4ad9e19aeb92c
+  - enabled: 1
+    path: Assets/Scenes/MainGalvez.unity
+    guid: 95e48285f84e9664a8546a77198d19f9
+  - enabled: 1
+    path: Assets/Scenes/MainMarkus.unity
+    guid: 616fa66229320bc4db382fef089ed52f
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/BasementHallway.unity
+    guid: 8b0f37e92a8e5204395440e20e4282d3
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/DiningRoom.unity
+    guid: 7570bae302759254cb9be30fab26cd0b
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/Kitchen.unity
+    guid: d3a6cdb0fbe70db428ba30e2785d3bf2
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/LivingRoom.unity
+    guid: 3a31d1e23ed44ef4e9aa8e76540c1f64
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/LivingRoom2.unity
+    guid: 7a0b6b9e969409244b8b8a7b851c139b
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/MainCorridor.unity
+    guid: 82b75776d528c754b9f959961fe3eac6
+  - enabled: 1
+    path: Assets/Scenes/house/MiddlePart/MiddleBathroom.unity
+    guid: 596098906a9c01049a4a9e086444d2db
+  - enabled: 1
+    path: Assets/Scenes/house/TopPart/Bathroom.unity
+    guid: 4378101a0df18bd4d866a1f4bf673167
+  - enabled: 1
+    path: Assets/Scenes/house/TopPart/KidBedroom1.unity
+    guid: 0157a2f0510c14c48ac53ea5c6fcd5ae
+  - enabled: 1
+    path: Assets/Scenes/house/TopPart/KidBedroom2.unity
+    guid: 9460b1227facbf6488fa7c06fc109278
+  - enabled: 1
+    path: Assets/Scenes/house/TopPart/MainHallway.unity
+    guid: 1f549fca00b566b4da6377c107078a1c
+  - enabled: 1
+    path: Assets/Scenes/house/TopPart/Office.unity
+    guid: b341d9b9328d1bd4d9a035fdea01f633
+  - enabled: 1
+    path: Assets/Scenes/house/TopPart/ParentsBedroom.unity
+    guid: 2eb403cb3622ae84c9c58e0a0f8170ea
+  - enabled: 1
+    path: Assets/Scenes/GameFinished.unity
+    guid: ca3cde9742e37104baafef26fcb5ec5d
+  - enabled: 1
+    path: Assets/Scenes/house/Basement.unity
+    guid: dbfeb3887feeb784d89d5458f9a88e1c
+  m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 075dcfdcd5ffa464c99881705e402045,
+      type: 2}
+    com.unity.input.settings: {fileID: 11400000, guid: 8a2dca1051e76df489c753182d7b3c89,
+      type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: dfa25217aa9afd34d83a93765f7ed80c,
+      type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: c5ec9c617f5276c4f95d2e6086546c6c,
+      type: 2}
