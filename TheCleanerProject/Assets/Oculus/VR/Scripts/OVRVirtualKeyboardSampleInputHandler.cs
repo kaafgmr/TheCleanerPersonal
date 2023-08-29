@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -18,148 +18,212 @@
  * limitations under the License.
  */
 
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class OVRVirtualKeyboardSampleInputHandler : MonoBehaviour
 {
-	private const float RAY_HIDE_FRONT_DISTANCE = 0.2f;
-	private const float RAY_HIDE_BEHIND_DISTANCE = 0.15f;
-	private const float THUMBSTICK_DEADZONE = 0.2f;
+    private const float RAY_MAX_DISTANCE = 100.0f;
+    private const float THUMBSTICK_DEADZONE = 0.2f;
+    private const float COLLISION_BOUNDS_ADDED_BLEED_PERCENT = 0.1f;
+    private const float LINEPOINTER_THINNING_THRESHOLD = 0.015f;
 
-	public bool IsPressed =>
-		OVRInput.Get(
-		OVRInput.Button.One | // right hand pinch
-		OVRInput.Button.Three | // left hand pinch
-		OVRInput.Button.PrimaryIndexTrigger |
-		OVRInput.Button.SecondaryIndexTrigger,
-		OVRInput.Controller.All);
+    private static float ApplyDeadzone(float value)
+    {
+        if (value > THUMBSTICK_DEADZONE)
+            return (value - THUMBSTICK_DEADZONE) / (1.0f - THUMBSTICK_DEADZONE);
+        else if (value < -THUMBSTICK_DEADZONE)
+            return (value + THUMBSTICK_DEADZONE) / (1.0f - THUMBSTICK_DEADZONE);
+        return 0.0f;
+    }
 
-	private static float ApplyDeadzone(float value)
-	{
-		if (value > THUMBSTICK_DEADZONE)
-			return (value - THUMBSTICK_DEADZONE) / (1.0f - THUMBSTICK_DEADZONE);
-		else if (value < -THUMBSTICK_DEADZONE)
-			return (value + THUMBSTICK_DEADZONE) / (1.0f - THUMBSTICK_DEADZONE);
-		return 0.0f;
-	}
+    public float AnalogStickX => ApplyDeadzone(OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).x +
+                                               OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).x);
 
-	public float AnalogStickX => ApplyDeadzone(OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).x + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).x);
-	public float AnalogStickY => ApplyDeadzone(OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y);
+    public float AnalogStickY => ApplyDeadzone(OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y +
+                                               OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y);
 
-	public Vector3 InputRayPosition => inputModule.rayTransform.position;
-	public Quaternion InputRayRotation =>
-		interactionDevice_ == OVRInput.Controller.LHand ?
-		inputModule.rayTransform.rotation * Quaternion.Euler(Vector3.forward * 180) : // Flip input rotation if left hand input
-		inputModule.rayTransform.rotation;
+    public Vector3 InputRayPosition => inputModule.rayTransform.position;
 
-	private Transform InputTransform;
+    public Quaternion InputRayRotation =>
+        interactionDevice_ == OVRInput.Controller.LHand
+            ? inputModule.rayTransform.rotation * Quaternion.Euler(Vector3.forward * 180)
+            : // Flip input rotation if left hand input
+            inputModule.rayTransform.rotation;
 
-	public OVRVirtualKeyboard OVRVirtualKeyboard;
-	[SerializeField]
-	private OVRHand leftHand;
-	[SerializeField]
-	private OVRHand rightHand;
-	[SerializeField]
-	private OVRRaycaster raycaster;
-	[SerializeField]
-	private OVRInputModule inputModule;
-	[SerializeField]
-	private LineRenderer leftLinePointer;
-	[SerializeField]
-	private LineRenderer rightLinePointer;
+    public OVRVirtualKeyboard OVRVirtualKeyboard;
 
-	private OVRInput.Controller? interactionDevice_;
+    [SerializeField]
+    private OVRRaycaster raycaster;
 
-	private void Update()
-	{
-		UpdateInteractionAnchor();
-		UpdateLineRenderer();
-	}
+    [SerializeField]
+    private OVRInputModule inputModule;
 
-	private void UpdateLineRenderer()
-	{
-		leftLinePointer.enabled = false;
-		rightLinePointer.enabled = false;
+    [SerializeField]
+    private LineRenderer leftLinePointer;
 
-		foreach (var inputHandler in OVRVirtualKeyboard.InputHandlers)
-		{
-			if (!inputHandler.PositionValid)
-			{
-				continue;
-			}
-			LineRenderer linePointer =
-				inputHandler.InteractionDevice == OVRInput.Controller.LHand ||
-				inputHandler.InteractionDevice == OVRInput.Controller.LTouch
-					? leftLinePointer
-					: rightLinePointer;
+    [SerializeField]
+    private LineRenderer rightLinePointer;
 
-			linePointer.enabled = true;
-			// Pull back ray origin a bit so when finger touches keys
-			// it won't show the laser again
-			Vector3 rayOrigin = inputHandler.InputPosePosition +
-			                    RAY_HIDE_BEHIND_DISTANCE * (inputHandler.InputPoseRotation * Vector3.back);
-			var ray = new Ray(rayOrigin, inputHandler.InputPoseRotation * Vector3.forward);
-			linePointer.SetPosition(0, inputHandler.InputPosePosition);
+    private OVRInput.Controller? interactionDevice_;
+    private float linePointerInitialWidth_;
 
-			if (Physics.Raycast(ray, out var hit, 100.0f))
-			{
-				// TODO: mesh kb changed how this worked.
-				// If the ray hits the keyboard background and you are close enough for
-				// direct input, don't show the ray
-				//{
-				//	linePointer.enabled = false;
-				//}
-				linePointer.SetPosition(1, hit.point);
-			}
-			else
-			{
-				linePointer.SetPosition(1,
-					inputHandler.InputPosePosition + ray.direction * 2.5f);
-			}
-		}
-	}
+    private void Start()
+    {
+        rightLinePointer.enabled = leftLinePointer.enabled = false;
+        linePointerInitialWidth_ = Math.Max(rightLinePointer.startWidth, leftLinePointer.startWidth);
+    }
 
-	private void UpdateInteractionAnchor()
-	{
-		// Determine currently active device
+    private void Update()
+    {
+        UpdateInteractionAnchor();
+        UpdateLineRenderer();
+    }
 
-		foreach (var inputHandler in OVRVirtualKeyboard.InputHandlers)
-		{
-			if (inputHandler.PositionValid)
-			{
-				if (interactionDevice_ == null || inputHandler.IsPressed)
-				{
-					interactionDevice_ = inputHandler.InteractionDevice;
-				}
-			}
-			else if (interactionDevice_ == inputHandler.InteractionDevice)
-			{
-				interactionDevice_ = null;
-			}
-		}
+    private void UpdateLineRenderer()
+    {
+        leftLinePointer.enabled = false;
+        rightLinePointer.enabled = false;
 
-		// Set transforms for Unity UI interaction
+        UpdateLineRendererFromSource(OVRVirtualKeyboard.InputSource.ControllerLeft);
+        UpdateLineRendererFromSource(OVRVirtualKeyboard.InputSource.ControllerRight);
+        UpdateLineRendererFromSource(OVRVirtualKeyboard.InputSource.HandLeft);
+        UpdateLineRendererFromSource(OVRVirtualKeyboard.InputSource.HandRight);
+    }
 
-		raycaster.pointer = (interactionDevice_ == OVRInput.Controller.LHand)
-			? leftHand.gameObject
-			: rightHand.gameObject;
+    private void UpdateLineRendererFromSource(OVRVirtualKeyboard.InputSource source)
+    {
+        Transform inputTransform = null;
+        switch (source)
+        {
+            case OVRVirtualKeyboard.InputSource.ControllerLeft:
+                inputTransform = OVRInput.IsControllerConnected(OVRInput.Controller.LTouch) &&
+#if UNITY_EDITOR
+                (!OVRVirtualKeyboard.handLeft || !OVRVirtualKeyboard.handLeft.IsTracked)
+#else
+                ((OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandLeft) == OVRInput.ControllerInHandState.NoHand) ||
+                (OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandLeft) == OVRInput.ControllerInHandState.ControllerInHand))
+#endif
+                ? OVRVirtualKeyboard.leftControllerDirectTransform : null;
+                break;
+            case OVRVirtualKeyboard.InputSource.ControllerRight:
+                inputTransform = OVRInput.IsControllerConnected(OVRInput.Controller.RTouch) &&
+#if UNITY_EDITOR
+                 (!OVRVirtualKeyboard.handRight || !OVRVirtualKeyboard.handRight.IsTracked)
+#else
+                ((OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandRight) == OVRInput.ControllerInHandState.NoHand) ||
+                (OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandRight) == OVRInput.ControllerInHandState.ControllerInHand))
+#endif
+                ? OVRVirtualKeyboard.rightControllerDirectTransform : null;
 
-		switch (interactionDevice_)
-		{
-			case OVRInput.Controller.LHand:
-				inputModule.rayTransform = leftHand.PointerPose;
-				break;
-			case OVRInput.Controller.LTouch:
-				inputModule.rayTransform = leftHand.transform;
-				break;
-			case OVRInput.Controller.RHand:
-				inputModule.rayTransform = rightHand.PointerPose;
-				break;
-			case OVRInput.Controller.RTouch:
-			default:
-				inputModule.rayTransform = rightHand.transform;
-				break;
-		}
-	}
+                break;
+            case OVRVirtualKeyboard.InputSource.HandLeft:
+                inputTransform = (OVRVirtualKeyboard.handLeft.IsPointerPoseValid)
+                    ? OVRVirtualKeyboard.handLeft.PointerPose
+                    : null;
+                break;
+            case OVRVirtualKeyboard.InputSource.HandRight:
+                inputTransform = (OVRVirtualKeyboard.handRight.IsPointerPoseValid)
+                    ? OVRVirtualKeyboard.handRight.PointerPose
+                    : null;
+                break;
+        }
+
+        if (inputTransform == null || inputTransform.position == Vector3.zero)
+        {
+            return;
+        }
+
+        var inputPosition = inputTransform.position;
+
+        bool isLeft = (source == OVRVirtualKeyboard.InputSource.ControllerLeft ||
+                       source == OVRVirtualKeyboard.InputSource.HandLeft);
+        LineRenderer linePointer = (isLeft) ? leftLinePointer : rightLinePointer;
+
+        linePointer.startWidth = linePointerInitialWidth_;
+        if (OVRVirtualKeyboard && OVRVirtualKeyboard.isActiveAndEnabled && OVRVirtualKeyboard.Collider)
+        {
+            // get the local input point, but apply scaling to account for the scaled collider bounds
+            var localPoint = OVRVirtualKeyboard.transform.InverseTransformPoint(inputPosition) * OVRVirtualKeyboard.transform.localScale.x;
+            // Check if input ray is within the collider bounds.
+            var interactionBounds = new Bounds
+            {
+                size = OVRVirtualKeyboard.Collider.bounds.size
+            };
+            // grow the interaction bounds beyond the collision bounds
+            interactionBounds.Expand(Vector3.one * COLLISION_BOUNDS_ADDED_BLEED_PERCENT);
+            // if input is with bounds, don't render the line
+            if (interactionBounds.Contains(localPoint))
+            {
+                linePointer.enabled = false;
+                return;
+            }
+
+            var closestPoint = interactionBounds.ClosestPoint(localPoint);
+            Vector3 offset = closestPoint - localPoint;
+            // if the input is outside of bounds, but within the thinning threshold, lerp the width based on distance
+            var distanceToInteractionBounds = offset.magnitude;
+            if (distanceToInteractionBounds < LINEPOINTER_THINNING_THRESHOLD)
+            {
+                linePointer.startWidth = Mathf.Lerp(0, linePointerInitialWidth_, distanceToInteractionBounds / LINEPOINTER_THINNING_THRESHOLD);
+            }
+        }
+        linePointer.endWidth = linePointer.startWidth;
+        linePointer.enabled = true;
+        linePointer.SetPosition(0, inputTransform.position);
+
+        var ray = new Ray(inputPosition, inputTransform.rotation * Vector3.forward);
+        if (OVRVirtualKeyboard.Collider && OVRVirtualKeyboard.Collider.Raycast(ray, out var hit, RAY_MAX_DISTANCE))
+        {
+            linePointer.SetPosition(1, hit.point);
+        }
+        else
+        {
+            linePointer.SetPosition(1, inputPosition + ray.direction * 2.5f);
+        }
+    }
+
+    private void UpdateInteractionAnchor()
+    {
+        OVRInput.Controller activeController = OVRInput.Controller.None;
+
+        var leftControllerExists = OVRVirtualKeyboard.leftControllerRootTransform != null;
+        var leftControllerActive = leftControllerExists && OVRInput.GetDown(OVRInput.RawButton.LIndexTrigger);
+        activeController = (leftControllerActive) ? OVRInput.Controller.LTouch : activeController;
+
+        var rightControllerExists = OVRVirtualKeyboard.rightControllerRootTransform != null;
+        var rightControllerActive = rightControllerExists && OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger);
+        activeController = (rightControllerActive) ? OVRInput.Controller.RTouch : activeController;
+
+        var handLeftExists = OVRVirtualKeyboard.handLeft != null;
+        var handLeftIsActive =
+            handLeftExists && OVRVirtualKeyboard.handLeft.GetFingerIsPinching(OVRHand.HandFinger.Index);
+        activeController = (handLeftIsActive) ? OVRInput.Controller.LHand : activeController;
+
+        var handRightExists = OVRVirtualKeyboard.handRight != null;
+        var handRightIsActive =
+            handRightExists && OVRVirtualKeyboard.handRight.GetFingerIsPinching(OVRHand.HandFinger.Index);
+        activeController = (handRightIsActive) ? OVRInput.Controller.RHand : activeController;
+
+        if (activeController == OVRInput.Controller.None)
+        {
+            return;
+        }
+
+        // Set transforms for Unity UI interaction
+        var dominantHandIsLeft =
+            (activeController == OVRInput.Controller.LHand || activeController == OVRInput.Controller.LTouch);
+        raycaster.pointer = (dominantHandIsLeft)
+            ? OVRVirtualKeyboard.handLeft.gameObject
+            : OVRVirtualKeyboard.handRight.gameObject;
+        interactionDevice_ = activeController;
+        inputModule.rayTransform = activeController switch
+        {
+            OVRInput.Controller.LHand => OVRVirtualKeyboard.handLeft.PointerPose,
+            OVRInput.Controller.LTouch => OVRVirtualKeyboard.handLeft.transform,
+            OVRInput.Controller.RHand => OVRVirtualKeyboard.handRight.PointerPose,
+            _ => OVRVirtualKeyboard.handRight.transform
+        };
+    }
 }
