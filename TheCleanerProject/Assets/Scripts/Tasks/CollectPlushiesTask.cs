@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class CollectPlushiesTask : Task
+public class CollectPlushiesTask : TaskInfo
 {
     public static CollectPlushiesTask instance;
 

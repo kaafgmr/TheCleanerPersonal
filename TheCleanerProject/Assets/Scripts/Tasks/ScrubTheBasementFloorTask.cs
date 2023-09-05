@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ScrubTheBasementFloorTask : Task
+public class ScrubTheBasementFloorTask : TaskInfo
 {
     public override void DoTask()
     {

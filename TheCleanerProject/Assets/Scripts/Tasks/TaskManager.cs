@@ -6,7 +6,7 @@ public class TaskManager : MonoBehaviour
 {
     public static TaskManager instance;
     
-    public List<Task> tasksList;
+    public List<TaskInfo> tasksList;
     public UnityEvent OnAllTasksCompleted;
     int numberTasksDone;
     

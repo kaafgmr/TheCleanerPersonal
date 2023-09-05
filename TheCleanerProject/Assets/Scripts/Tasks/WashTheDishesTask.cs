@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 
-public class WashTheDishesTask : Task
+public class WashTheDishesTask : TaskInfo
 {
     public static WashTheDishesTask _instance;
     public List<PlateInteraction> plates;

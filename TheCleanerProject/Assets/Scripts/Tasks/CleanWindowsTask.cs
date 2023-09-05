@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class CleanWindowsTask : Task
+public class CleanWindowsTask : TaskInfo
 {
     public static CleanWindowsTask instance;
 

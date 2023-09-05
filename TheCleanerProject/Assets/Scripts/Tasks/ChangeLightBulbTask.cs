@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChangeLightBulbTask : Task //script que va en el padre de la bombilla rota
+public class ChangeLightBulbTask : TaskInfo //script que va en el padre de la bombilla rota
 {
     public override void internalStart() { base.internalStart(); }
     public override void UpdateTask() { }

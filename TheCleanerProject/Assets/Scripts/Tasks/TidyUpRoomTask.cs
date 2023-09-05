@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class TidyUpRoomTask : Task
+public class TidyUpRoomTask : TaskInfo
 {
     public List<ObjectsToOrder> objesctsList;
 

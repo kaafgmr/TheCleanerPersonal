@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class CloseWindowsTask : Task
+public class CloseWindowsTask : TaskInfo
 {
     public static CloseWindowsTask instance;
     public List<CloseWindowInteraction> windowsToClose;

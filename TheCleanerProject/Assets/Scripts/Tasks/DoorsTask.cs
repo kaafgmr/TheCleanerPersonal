@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DoorsTask : Task
+public class DoorsTask : TaskInfo
 {
     public override void DoTask()
     {

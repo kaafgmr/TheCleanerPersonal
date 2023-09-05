@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class VacuumTask : Task
+public class VacuumTask : TaskInfo
 {
     public List<DustInteraction> listOfDusts;
     int numberOfDustsVacuumed;
