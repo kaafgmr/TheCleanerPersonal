@@ -5,3 +5,4 @@
  In this game you are a house keeper who have to clean a hounted house before monsters get you.
 
 ## Showcase
+![](https://github.com/kaafgmr/TheCleanerPersonal/blob/main/Itchio/showcase.gif)
